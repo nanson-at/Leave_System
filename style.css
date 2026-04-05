@@ -379,12 +379,86 @@ td {
   animation: fadeIn 0.4s ease forwards;
 }
 
-/* Mobile Adjustments */
-@media (max-width: 600px) {
+/* --- Application Form Row --- */
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+/* --- Mobile Adjustments & Media Queries --- */
+
+/* Responsive Breakpoints */
+@media (max-width: 992px) {
+  .main-layout {
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  .sidebar {
+    flex: 0 0 auto;
+    width: 100%;
+  }
+
+  .container {
+    padding: 10px 15px;
+  }
+}
+
+@media (max-width: 768px) {
+  header .nav-content {
+    flex-direction: column;
+    gap: 15px;
+    padding: 15px 10px;
+  }
+  
+  .user-profile {
+    flex-direction: column;
+    width: 100%;
+    gap: 10px;
+  }
+
+  .lang-group {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .admin-link {
+    width: 100%;
+    justify-content: center;
+    background: var(--secondary-color);
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .selection-card {
+    padding: 20px 15px;
+  }
+
+  .form-section {
+    padding: 20px 15px;
+  }
+
   .dashboard-grid {
     grid-template-columns: 1fr;
   }
-  .form-section {
-    padding: 20px;
+  
+  .card {
+    padding: 16px;
+  }
+  
+  h3 { font-size: 1.1rem; }
+}
+
+@media (max-width: 480px) {
+  .logo { font-size: 1.1rem; }
+  .card-value { font-size: 1.5rem; }
+  
+  table th, table td {
+    padding: 10px;
+    font-size: 0.8rem;
   }
 }
