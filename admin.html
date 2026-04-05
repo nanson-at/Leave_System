@@ -203,11 +203,21 @@
     </div>
 
     <!-- Login Lock -->
-    <div id="login-overlay" class="login-overlay">
-        <div class="card" style="width: 350px; text-align: center;">
-            <h2 style="margin-bottom: 20px;">Admin Login</h2>
-            <input type="password" id="admin-pass" placeholder="Enter Password (Default: admin123)" style="margin-bottom: 20px;">
-            <button class="btn btn-primary btn-full" onclick="checkLogin()">Login</button>
+    <div id="login-overlay" class="login-overlay" style="background: linear-gradient(135deg, #f0f2f5 0%, #e1e7f0 100%);">
+        <div class="card animate-fade" style="width: 380px; padding: 40px; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.1);">
+            <div style="background: var(--primary-color); color: white; width: 60px; height: 60px; border-radius: 15px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 2rem;">
+                <i class="ph-bold ph-lock-key"></i>
+            </div>
+            <h2 style="margin-bottom: 5px; font-weight: 700;">Admin Access</h2>
+            <p style="color: var(--text-sub); margin-bottom: 25px; font-size: 0.9rem;">Please enter your credentials</p>
+            
+            <div class="form-group" style="text-align: left;">
+                <label for="admin-pass" style="font-size: 0.8rem; font-weight: 600; text-transform: uppercase; color: var(--text-sub);">Password</label>
+                <input type="password" id="admin-pass" placeholder="••••••••" 
+                    style="margin-bottom: 20px; width: 100%; font-size: 1.1rem; padding: 12px 15px;"
+                    onkeydown="if(event.key === 'Enter') checkLogin()">
+            </div>
+            <button class="btn btn-primary btn-full" onclick="checkLogin()" style="padding: 14px; font-weight: 600; font-size: 1rem;">Unlock Portal</button>
         </div>
     </div>
 

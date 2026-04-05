@@ -16,9 +16,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-function checkLogin() {
-    const pass = document.getElementById('admin-pass').value;
-    if (pass === 'admin123') { 
+async function checkLogin() {
+    const pass = document.getElementById('admin-pass').value.trim();
+    
+    // Hash the input password using SHA-256
+    const encoder = new TextEncoder();
+    const data = encoder.encode(pass);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+    // The SHA-256 hash of 'admin12345'
+    const targetHash = '41e5653fc7aeb894026d6bb7b2db7f65902b454945fa8fd65a6327047b5277fb';
+
+    if (hashHex === targetHash) {
         sessionStorage.setItem('isAdmin', 'true');
         document.getElementById('login-overlay').style.display = 'none';
         initAdmin();
@@ -39,7 +50,7 @@ function showSection(sectionId) {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     const targetBtn = document.querySelector(`button[onclick="showSection('${sectionId}')"]`);
     if (targetBtn) targetBtn.classList.add('active');
-    
+
     if (sectionId === 'pending') loadPending();
     if (sectionId === 'calendar') loadCalendar();
     if (sectionId === 'report') loadReport();
@@ -58,21 +69,21 @@ async function initAdmin() {
 async function initFilterOptions() {
     const { data: groups } = await supabaseClient.from('groups').select('*');
     const { data: projects } = await supabaseClient.from('projects').select('*');
-    
+
     ['calendar', 'report'].forEach(type => {
         const gSel = document.getElementById(`${type}-group-filter`);
         const pSel = document.getElementById(`${type}-project-filter`);
-        if(!gSel || !pSel) return;
-        
+        if (!gSel || !pSel) return;
+
         gSel.innerHTML = '<option value="">All Groups</option>';
         pSel.innerHTML = '<option value="">All Projects</option>';
-        
+
         groups.forEach(g => {
             const opt = document.createElement('option');
             opt.value = g.id; opt.textContent = g.name;
             gSel.appendChild(opt);
         });
-        
+
         projects.forEach(p => {
             const opt = document.createElement('option');
             opt.value = p.id; opt.textContent = p.name;
@@ -86,10 +97,10 @@ function initCalendarFilters() {
     const monthSelect = document.getElementById('calendar-month');
     const now = new Date();
     const currentYear = now.getFullYear();
-    for(let y = currentYear - 2; y <= currentYear + 2; y++) {
+    for (let y = currentYear - 2; y <= currentYear + 2; y++) {
         const opt = document.createElement('option');
         opt.value = y; opt.textContent = y;
-        if(y === currentYear) opt.selected = true;
+        if (y === currentYear) opt.selected = true;
         yearSelect.appendChild(opt);
     }
     monthSelect.value = now.getMonth();
@@ -141,7 +152,7 @@ async function loadCalendar() {
     const groupF = document.getElementById('calendar-group-filter').value;
     const projectF = document.getElementById('calendar-project-filter').value;
 
-    const firstDayValue = new Date(year, month, 1).getDay(); 
+    const firstDayValue = new Date(year, month, 1).getDay();
     const offset = (firstDayValue === 0) ? 6 : firstDayValue - 1;
     for (let j = 0; j < offset; j++) {
         const emptyDiv = document.createElement('div');
@@ -162,15 +173,15 @@ async function loadCalendar() {
         dayDiv.className = 'calendar-day';
         dayDiv.innerHTML = `<strong>${i}</strong>`;
         const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
-        
+
         leaves.filter(l => {
             const inDate = dateStr >= l.start_date && dateStr <= l.end_date;
             if (!inDate) return false;
-            
+
             // 關鍵篩選邏輯
             let groupMatch = !groupF || (l.users.user_groups && l.users.user_groups.some(ug => ug.group_id == groupF));
             let projectMatch = !projectF || (l.users.user_projects && l.users.user_projects.some(up => up.project_id == projectF));
-            
+
             return groupMatch && projectMatch;
         }).forEach(l => {
             const tag = document.createElement('span');
@@ -206,10 +217,10 @@ async function loadReport() {
     const groupF = document.getElementById('report-group-filter').value;
     const projectF = document.getElementById('report-project-filter').value;
     const tbody = document.getElementById('report-table-body');
-    
+
     if (!start || !end) return;
     tbody.innerHTML = '<tr><td colspan="3">Processing report...</td></tr>';
-    
+
     // 1. 先獲取 符合篩選條件的「所有同事」
     let userQuery = supabaseClient.from('users').select('*, user_groups(group_id), user_projects(project_id)').eq('is_active', true);
     const { data: allUsers } = await userQuery;
@@ -232,9 +243,9 @@ async function loadReport() {
         .eq('status', 'Approved')
         .gte('start_date', start)
         .lte('start_date', end);
-        
+
     if (error) return;
-    
+
     // 3. 建立報表數據
     const userStats = {};
     targetUsers.forEach(u => {
@@ -247,10 +258,10 @@ async function loadReport() {
             userStats[l.user_id].count += 1;
         }
     });
-    
+
     // 4. 渲染表格
     tbody.innerHTML = '';
-    Object.values(userStats).sort((a,b) => a.name.localeCompare(b.name)).forEach(s => {
+    Object.values(userStats).sort((a, b) => a.name.localeCompare(b.name)).forEach(s => {
         const tr = document.createElement('tr');
         tr.innerHTML = `<td><strong>${s.name}</strong></td>
             <td>${s.totalDays.toFixed(1)} days</td>
@@ -346,7 +357,7 @@ async function saveUserProjects(userId) {
 async function updateUserColor(userId, newColor) { await supabaseClient.from('users').update({ color: newColor }).eq('id', userId); }
 async function renameUser(id, old) {
     const name = prompt('Rename:', old);
-    if(name && name !== old) { await supabaseClient.from('users').update({ name }).eq('id', id); loadUsers(); }
+    if (name && name !== old) { await supabaseClient.from('users').update({ name }).eq('id', id); loadUsers(); }
 }
 
 // --- 7. Group & Project Masters ---
@@ -357,9 +368,9 @@ async function loadGroups() {
         <button class="btn" onclick="renameGroup(${g.id},'${g.name}')">Rename</button>
         <button class="btn" style="color:red" onclick="deleteGroup(${g.id})">Del</button></td></tr>`).join('');
 }
-async function addGroup() { const name = prompt('Name:'); if(name) { await supabaseClient.from('groups').insert([{name}]); loadGroups(); } }
-async function renameGroup(id, old) { const name = prompt('Rename:', old); if(name && name!==old) { await supabaseClient.from('groups').update({name}).eq('id',id); loadGroups(); } }
-async function deleteGroup(id) { if(confirm('Delete?')) { await supabaseClient.from('groups').delete().eq('id',id); loadGroups(); } }
+async function addGroup() { const name = prompt('Name:'); if (name) { await supabaseClient.from('groups').insert([{ name }]); loadGroups(); } }
+async function renameGroup(id, old) { const name = prompt('Rename:', old); if (name && name !== old) { await supabaseClient.from('groups').update({ name }).eq('id', id); loadGroups(); } }
+async function deleteGroup(id) { if (confirm('Delete?')) { await supabaseClient.from('groups').delete().eq('id', id); loadGroups(); } }
 
 async function loadProjects() {
     const { data } = await supabaseClient.from('projects').select('*').order('id');
@@ -368,13 +379,13 @@ async function loadProjects() {
         <button class="btn" onclick="renameProject(${p.id},'${p.name}')">Rename</button>
         <button class="btn" style="color:red" onclick="deleteProject(${p.id})">Del</button></td></tr>`).join('');
 }
-async function addProject() { const name = prompt('Name:'); if(name) { await supabaseClient.from('projects').insert([{name}]); loadProjects(); } }
-async function renameProject(id, old) { const name = prompt('Rename:', old); if(name && name!==old) { await supabaseClient.from('projects').update({name}).eq('id',id); loadProjects(); } }
-async function deleteProject(id) { if(confirm('Delete?')) { await supabaseClient.from('projects').delete().eq('id',id); loadProjects(); } }
+async function addProject() { const name = prompt('Name:'); if (name) { await supabaseClient.from('projects').insert([{ name }]); loadProjects(); } }
+async function renameProject(id, old) { const name = prompt('Rename:', old); if (name && name !== old) { await supabaseClient.from('projects').update({ name }).eq('id', id); loadProjects(); } }
+async function deleteProject(id) { if (confirm('Delete?')) { await supabaseClient.from('projects').delete().eq('id', id); loadProjects(); } }
 
 async function toggleUser(id, stat) { await supabaseClient.from('users').update({ is_active: !stat }).eq('id', id); loadUsers(); }
-async function showAddUser() { const name = prompt('Name:'); if(name) { await supabaseClient.from('users').insert([{ name, annual_leave_total: 12, is_active: true, color: '#0052D9' }]); loadUsers(); } }
+async function showAddUser() { const name = prompt('Name:'); if (name) { await supabaseClient.from('users').insert([{ name, annual_leave_total: 12, is_active: true, color: '#0052D9' }]); loadUsers(); } }
 
-window.onclick = function(event) { 
+window.onclick = function (event) {
     if (event.target.classList.contains('modal')) { closeModal(); closeGroupModal(); closeProjectModal(); }
 }
