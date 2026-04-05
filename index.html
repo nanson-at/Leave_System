@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LeaveSmart - Multi-Language Leave System</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        .lang-select {
+            padding: 5px 10px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-color);
+            background: white;
+            font-size: 0.85rem;
+            margin-right: 15px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="nav-content">
+            <div class="logo">
+                <div class="logo-icon"><i class="ph-bold ph-airplane"></i></div>
+                <span>LeaveSmart</span>
+            </div>
+            <div class="user-profile">
+                <a href="admin.html" class="admin-link"><i class="ph-bold ph-shield-check"></i> <span data-i18n="admin_portal">Admin Portal</span></a>
+                <div class="lang-group">
+                    <button class="lang-btn" id="btn-lang-en" onclick="changeLanguage('en')">English</button>
+                    <button class="lang-btn" id="btn-lang-zh-HK" onclick="changeLanguage('zh-HK')">繁</button>
+                    <button class="lang-btn" id="btn-lang-zh-CN" onclick="changeLanguage('zh-CN')">簡</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container main-layout">
+        <!-- Sidebar: Today's Leaves -->
+        <aside class="sidebar animate-fade">
+            <div class="card sidebar-card">
+                <h3 data-i18n="today_leaves_title"><i class="ph-bold ph-calendar-star" style="color: var(--primary-color);"></i> Today's Leaves</h3>
+                <div id="today-list" class="today-list">
+                    <p data-i18n="loading">Loading...</p>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Right Content Section -->
+        <div class="main-content">
+            <!-- Main Selector Section -->
+            <section class="selection-section animate-fade">
+                <div class="selection-card">
+                    <label for="user-select" class="selection-label" data-i18n="welcome_select">Welcome! Please select your name:</label>
+                    <select id="user-select" class="main-select">
+                        <option value="" data-i18n="select_colleague">Select Colleague...</option>
+                    </select>
+                </div>
+            </section>
+
+            <!-- Dashboard OverView -->
+            <section class="dashboard-grid animate-fade">
+                <div class="card">
+                    <div class="card-icon" style="background: var(--secondary-color); color: var(--primary-color);">
+                        <i class="ph-bold ph-calendar-check"></i>
+                    </div>
+                    <div class="card-info">
+                        <h4 data-i18n="leave_remaining">Leave Balance</h4>
+                        <h2 id="annual-leave-balance">0</h2>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-icon" style="background: #FFF7E6; color: var(--warning-color);">
+                        <i class="ph-bold ph-hourglass-medium"></i>
+                    </div>
+                    <div class="card-info">
+                        <h4 data-i18n="pending_status">Pending</h4>
+                        <h2 id="pending-count">0</h2>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-icon" style="background: #E6FFFB; color: #08979C;">
+                        <i class="ph-bold ph-chart-line-up"></i>
+                    </div>
+                    <div class="card-info">
+                        <h4 data-i18n="monthly_used">Used (Month)</h4>
+                        <h2 id="monthly-used">0</h2>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Leave Form Section -->
+            <section class="form-section animate-fade">
+                <div class="card">
+                    <h3 data-i18n="apply_leave_title">Apply for Leave</h3>
+                    <form id="leave-form">
+                        <div class="form-group">
+                            <label for="leave-type" data-i18n="leave_type_label">Leave Type</label>
+                            <select id="leave-type" required>
+                                <option value="Annual" data-i18n="type_annual">Annual Leave</option>
+                                <option value="Sick" data-i18n="type_sick">Sick Leave</option>
+                                <option value="Personal" data-i18n="type_personal">Personal Leave</option>
+                                <option value="Compensation" data-i18n="type_comp">Compensation Leave</option>
+                            </select>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px;">
+                            <div class="form-group">
+                                <label for="start-date" data-i18n="start_date">Start Date</label>
+                                <input type="date" id="start-date" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="end-date" data-i18n="end_date">End Date</label>
+                                <input type="date" id="end-date" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="leave-days" data-i18n="leave_days">Leave Days</label>
+                                <input type="number" id="leave-days" step="0.5" placeholder="Auto" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="reason" data-i18n="reason_label">Reason (Optional)</label>
+                            <textarea id="reason" data-i18n-placeholder="reason_placeholder" placeholder="Enter reason..."></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-full" id="submit-btn">
+                            <i class="ph-bold ph-paper-plane-tilt"></i>
+                            <span data-i18n="submit_btn">Submit Application</span>
+                        </button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- History Records -->
+            <section class="history-section animate-fade" style="animation-delay: 0.2s">
+                <div class="section-header">
+                    <h3><i class="ph-bold ph-clock-counter-clockwise"></i> <span data-i18n="history_title">Application History</span></h3>
+                </div>
+                <div class="table-container">
+                    <table id="history-table">
+                        <thead>
+                            <tr>
+                                <th data-i18n="th_date">Apply Date</th>
+                                <th data-i18n="th_type">Type</th>
+                                <th data-i18n="th_days">Days</th>
+                                <th data-i18n="th_status">Status</th>
+                                <th data-i18n="th_remark">Remark</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-body">
+                            <tr>
+                                <td colspan="5" style="text-align: center; color: var(--text-sub);" data-i18n="select_to_view">Please select a colleague to view records.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div> <!-- End of .main-content -->
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="app.js"></script>
+</body>
+</html>

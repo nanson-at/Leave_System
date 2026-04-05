@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LeaveSmart Admin - Management Console</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        /* Admin Specific Styles - Full Width Layout */
+        .container {
+            max-width: none;
+            width: 100%;
+            padding: 20px 40px;
+        }
+        .admin-nav {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+            padding-bottom: 5px;
+        }
+        .tab-btn {
+            padding: 10px 20px;
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .tab-btn.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+        .admin-section { display: none; }
+        .admin-section.active { display: block; }
+        
+        .login-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-color);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 1000;
+        }
+        
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 10px;
+            background: var(--border-color);
+            padding: 10px;
+            border-radius: var(--radius-md);
+            margin-top: 20px;
+        }
+        .calendar-day {
+            background: white;
+            min-height: 120px;
+            padding: 10px;
+            font-size: 0.9rem;
+            border-radius: 4px;
+            box-shadow: inset 0 0 0 1px var(--border-color);
+        }
+        .weekday-header {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            text-align: center;
+            font-weight: 700;
+            color: var(--text-sub);
+            margin-bottom: 5px;
+        }
+        .leave-tag {
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            margin-top: 4px;
+            display: block;
+            font-weight: 600;
+            border-left: 4px solid rgba(0,0,0,0.2);
+            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
+        .header-select {
+            padding: 8px 12px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-color);
+            background: white;
+            font-size: 0.9rem;
+        }
+        input[type="color"] {
+            width: 30px; height: 30px; border: none; padding: 0; background: none; cursor: pointer;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            align-items: center; justify-content: center;
+        }
+        .modal-content {
+            background: white;
+            padding: 32px;
+            border-radius: var(--radius-lg);
+            width: 450px;
+            max-width: 90%;
+            box-shadow: var(--shadow-md);
+            position: relative;
+        }
+        .modal-content.modal-lg {
+            width: 750px;
+        }
+        .modal-close {
+            position: absolute; top: 20px; right: 20px;
+            cursor: pointer; font-size: 1.5rem; color: var(--text-sub);
+        }
+        .group-pill {
+            display: inline-block;
+            background: #e5e7eb;
+            color: #374151;
+            padding: 4px 12px; /* 加大 Padding */
+            border-radius: 99px;
+            font-size: 0.85rem; /* 字體放大 */
+            margin-right: 6px;
+            margin-bottom: 6px;
+        }
+        .project-pill {
+            display: inline-block;
+            background: #D1FAE5;
+            color: #065F46;
+            padding: 4px 12px; /* 加大 Padding */
+            border-radius: 4px;
+            font-size: 0.85rem; /* 字體放大 */
+            margin-right: 6px;
+            margin-bottom: 6px;
+        }
+        /* 管理員列表全屏優化 */
+        table th, table td {
+            padding: 16px 20px; /* 顯著增加間距 */
+            font-size: 1rem;    /* 統一字體大小為 1rem */
+        }
+        table th {
+            font-size: 1.1rem;  /* 標題欄略大 */
+        }
+        #group-table-selection-body td, #project-table-selection-body td {
+            padding: 14px 20px;
+            font-size: 1.1rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Modal: Leave Details -->
+    <div id="leave-modal" class="modal">
+        <div class="modal-content animate-fade">
+            <span class="modal-close" onclick="closeModal()"><i class="ph-bold ph-x"></i></span>
+            <div id="modal-body">
+                <h3 id="modal-user" style="color: var(--primary-color); margin-bottom: 15px;">Colleague Name</h3>
+                <p><strong>Date Range:</strong> <span id="modal-date"></span></p>
+                <p><strong>Total Days:</strong> <span id="modal-days"></span></p>
+                <p><strong>Reason:</strong></p>
+                <div id="modal-reason" style="background: var(--bg-color); padding: 15px; border-radius: var(--radius-md); margin-top: 5px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Group Assignment -->
+    <div id="group-assign-modal" class="modal">
+        <div class="modal-content modal-lg animate-fade">
+            <span class="modal-close" onclick="closeGroupModal()"><i class="ph-bold ph-x"></i></span>
+            <div id="modal-group-body">
+                <h3 id="target-user-name" style="margin-bottom: 25px; font-size: 1.5rem;">Manage User's Groups</h3>
+                <div class="table-container" style="max-height: 400px; overflow-y: auto; margin-bottom: 25px;">
+                    <table>
+                        <thead>
+                            <tr><th style="width: 50px;">Select</th><th>Group Name</th></tr>
+                        </thead>
+                        <tbody id="group-table-selection-body"></tbody>
+                    </table>
+                </div>
+                <button id="save-groups-btn" class="btn btn-primary btn-full">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Project Assignment -->
+    <div id="project-assign-modal" class="modal">
+        <div class="modal-content modal-lg animate-fade">
+            <span class="modal-close" onclick="closeProjectModal()"><i class="ph-bold ph-x"></i></span>
+            <div id="modal-project-body">
+                <h3 id="target-project-user-name" style="margin-bottom: 25px; font-size: 1.5rem;">Manage User's Projects</h3>
+                <div class="table-container" style="max-height: 400px; overflow-y: auto; margin-bottom: 25px;">
+                    <table>
+                        <thead>
+                            <tr><th style="width: 50px;">Select</th><th>Project Name</th></tr>
+                        </thead>
+                        <tbody id="project-table-selection-body"></tbody>
+                    </table>
+                </div>
+                <button id="save-projects-btn" class="btn btn-primary btn-full">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Lock -->
+    <div id="login-overlay" class="login-overlay">
+        <div class="card" style="width: 350px; text-align: center;">
+            <h2 style="margin-bottom: 20px;">Admin Login</h2>
+            <input type="password" id="admin-pass" placeholder="Enter Password (Default: admin123)" style="margin-bottom: 20px;">
+            <button class="btn btn-primary btn-full" onclick="checkLogin()">Login</button>
+        </div>
+    </div>
+
+    <header>
+        <div class="nav-content">
+            <div class="logo">
+                <div class="logo-icon"><i class="ph-bold ph-shield-check"></i></div>
+                <span>Admin Console</span>
+            </div>
+            <div style="display: flex; gap: 15px; align-items: center;">
+                <a href="index.html" class="admin-link">Back to Public Portal</a>
+                <button onclick="logout()" class="btn" style="background: #F53F3F; color: white; border: none; padding: 5px 15px;">Logout</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Tabs Navigation -->
+        <div class="admin-nav">
+            <button class="tab-btn active" onclick="showSection('pending')">Review Applications</button>
+            <button class="tab-btn" onclick="showSection('calendar')">Leave Calendar</button>
+            <button class="tab-btn" onclick="showSection('report')">Reports</button>
+            <button class="tab-btn" onclick="showSection('users')">User Management</button>
+            <button class="tab-btn" onclick="showSection('groups')">Groups</button>
+            <button class="tab-btn" onclick="showSection('projects')">Projects</button>
+        </div>
+
+        <!-- 1. Pending Approvals -->
+        <section id="pending" class="admin-section active animate-fade">
+            <div class="card">
+                <h3>Pending Approval List</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr><th>Colleague</th><th>Date Range</th><th>Days</th><th>Reason</th><th>Action</th></tr>
+                        </thead>
+                        <tbody id="pending-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Calendar View -->
+        <section id="calendar" class="admin-section animate-fade">
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                    <h3 id="current-month-display">Calendar</h3>
+                    <div style="display: flex; gap: 10px;">
+                        <select id="calendar-group-filter" class="header-select" onchange="loadCalendar()">
+                            <option value="">All Groups</option>
+                        </select>
+                        <select id="calendar-project-filter" class="header-select" onchange="loadCalendar()">
+                            <option value="">All Projects</option>
+                        </select>
+                        <select id="calendar-year" class="header-select" onchange="loadCalendar()"></select>
+                        <select id="calendar-month" class="header-select" onchange="loadCalendar()">
+                            <option value="0">January</option><option value="1">February</option>
+                            <option value="2">March</option><option value="3">April</option>
+                            <option value="4">May</option><option value="5">June</option>
+                            <option value="6">July</option><option value="7">August</option>
+                            <option value="8">September</option><option value="9">October</option>
+                            <option value="10">November</option><option value="11">December</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="weekday-header">
+                    <div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div>
+                </div>
+                <div class="calendar-grid" id="calendar-grid"></div>
+            </div>
+        </section>
+
+        <!-- 3. Dynamic Reports -->
+        <section id="report" class="admin-section animate-fade">
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                    <h3>Leave Statistics Report</h3>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <select id="report-group-filter" class="header-select">
+                            <option value="">All Groups</option>
+                        </select>
+                        <select id="report-project-filter" class="header-select">
+                            <option value="">All Projects</option>
+                        </select>
+                        <input type="date" id="report-start" class="header-select">
+                        <span>to</span>
+                        <input type="date" id="report-end" class="header-select">
+                        <button class="btn btn-primary" onclick="loadReport()">Generate Report</button>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr><th>Full Name</th><th>Total Days</th><th>Count</th></tr>
+                        </thead>
+                        <tbody id="report-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. User Management -->
+        <section id="users" class="admin-section animate-fade">
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+                    <h3>Employee Directory</h3>
+                    <button class="btn btn-primary" onclick="showAddUser()">+ Add User</button>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr><th>Full Name</th><th>Allowance</th><th>Groups</th><th>Projects</th><th>Color</th><th>Status</th><th>Action</th></tr>
+                        </thead>
+                        <tbody id="user-mgr-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Group Settings -->
+        <section id="groups" class="admin-section animate-fade">
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                    <h3>Group List</h3>
+                    <button class="btn btn-primary" onclick="addGroup()">+ New Group</button>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead><tr><th>Group Name</th><th>Action</th></tr></thead>
+                        <tbody id="group-mgr-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Project Settings -->
+        <section id="projects" class="admin-section animate-fade">
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                    <h3>Project List</h3>
+                    <button class="btn btn-primary" onclick="addProject()">+ New Project</button>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead><tr><th>Project Name</th><th>Action</th></tr></thead>
+                        <tbody id="project-mgr-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="admin.js"></script>
+</body>
+</html>

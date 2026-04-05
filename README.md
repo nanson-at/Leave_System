@@ -1,0 +1,4 @@
+IBmwGHnmhCrDQLWX
+
+https://jylruqsfrosqgrbwiwyy.supabase.co
+sb_publishable_KhmtGP8jm4koH21QXMMSjw_jaLDq8RE
