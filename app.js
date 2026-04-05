@@ -252,7 +252,7 @@ async function loadHistory() {
         const displayStatus = dict['status_' + l.status.toLowerCase()] || l.status;
         tr.innerHTML = `
             <td>${l.apply_date}</td>
-            <td>${l.type}</td>
+            <td>${l.leave_type || l.type || '-'}</td>
             <td>${l.days}</td>
             <td><span class="status-badge status-${l.status.toLowerCase()}">${displayStatus}</span></td>
             <td>${l.reason || '-'}</td>
@@ -285,26 +285,37 @@ async function loadTodayOnLeave() {
 async function handleFormSubmit(e) {
     e.preventDefault();
     const dict = translations[currentLang];
+    
+    if (!currentUserId) {
+        alert(currentLang === 'en' ? "Please select your name first!" : "請先選擇您的姓名！");
+        return;
+    }
+
     const submitBtn = document.getElementById('submit-btn');
     submitBtn.disabled = true;
     submitBtn.innerText = dict['submitting'];
 
     const formData = {
-        user_id: currentUserId,
-        type: document.getElementById('leave-type').value,
+        user_id: parseInt(currentUserId),
+        leave_type: document.getElementById('leave-type').value, // 修改為 leave_type
         start_date: document.getElementById('start-date').value,
         end_date: document.getElementById('end-date').value,
-        days: document.getElementById('leave-days').value,
+        days: parseFloat(document.getElementById('leave-days').value),
         reason: document.getElementById('reason').value,
         status: 'Pending',
         apply_date: new Date().toISOString().split('T')[0]
     };
+
+    console.log('Submitting form data:', formData);
 
     const { error } = await supabaseClient.from('leaves').insert([formData]);
     if (!error) {
         alert(dict['submit_success']);
         e.target.reset();
         loadLeaveStats(); loadHistory();
+    } else {
+        console.error('Supabase Insert Error:', error);
+        alert('Error: ' + error.message);
     }
     submitBtn.disabled = false;
     submitBtn.innerHTML = `<i class="ph-bold ph-paper-plane-tilt"></i> <span>${dict['submit_btn']}</span>`;
