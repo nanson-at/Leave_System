@@ -209,6 +209,60 @@ async function showLeaveDetails(leaveId) {
 function closeModal() { document.getElementById('leave-modal').style.display = 'none'; }
 function closeGroupModal() { document.getElementById('group-assign-modal').style.display = 'none'; }
 function closeProjectModal() { document.getElementById('project-assign-modal').style.display = 'none'; }
+function closeManualModal() { document.getElementById('manual-modal').style.display = 'none'; }
+
+async function showManual() {
+    const view = document.getElementById('manual-content-view');
+    document.getElementById('manual-modal').style.display = 'flex';
+    
+    // Embedded User Manual Content in English
+    const manualMarkdown = `
+# 🚀 LeaveSmart Leave Management System - User Manual
+
+This manual helps users quickly familiarize themselves with the **LeaveSmart** system, including the public portal and the admin console.
+
+---
+
+## 📅 1. Employee Leave Portal (Public Portal)
+
+The employee portal allows colleagues to submit leave applications, check leave balances, and view who is on leave today.
+
+### 1.1 Language Selection
+- Click **English**, **繁**, or **簡** in the top-right corner to switch the interface language instantly.
+
+### 1.2 Dashboard Overview
+1. Select your **name** from the dropdown list.
+2. The system will load your **Leave Balance** and **Pending Items**.
+
+### 1.3 Submitting an Application
+1. Choose the **Leave Type** (e.g., Annual, Sick, etc.).
+2. Select the **Start Date** and **End Date**. Business days will be calculated automatically.
+3. Click "Submit Application" to finish.
+
+---
+
+## 🛠️ 2. Admin Console
+
+### 2.1 Login & Access
+- Click **Admin Portal** on the home page.
+- Enter the password (default: **admin12345**) to unlock.
+
+### 2.2 Reviewing Requests
+- Click the green **Approve** button to approve a request, or red **Reject** to deny it.
+
+### 2.3 Leave Calendar
+- Use filters for **Year/Month**, **Groups**, or **Projects** to view the scheduled leaves.
+
+### 2.4 Statistics Reports
+- Select a **Date Range** and click "Generate Report" to view usage stats.
+
+---
+
+*LeaveSmart - Lightweight, Efficient, Cross-platform.*
+    `;
+    
+    view.innerHTML = marked.parse(manualMarkdown);
+}
 
 // --- 5. Enhanced Dynamic Reports (顯示該團隊所有同事) ---
 async function loadReport() {
@@ -387,5 +441,7 @@ async function toggleUser(id, stat) { await supabaseClient.from('users').update(
 async function showAddUser() { const name = prompt('Name:'); if (name) { await supabaseClient.from('users').insert([{ name, annual_leave_total: 12, is_active: true, color: '#0052D9' }]); loadUsers(); } }
 
 window.onclick = function (event) {
-    if (event.target.classList.contains('modal')) { closeModal(); closeGroupModal(); closeProjectModal(); }
+    if (event.target.classList.contains('modal')) { 
+        closeModal(); closeGroupModal(); closeProjectModal(); closeManualModal();
+    }
 }

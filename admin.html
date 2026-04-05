@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="style.css">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         /* Admin Specific Styles - Full Width Layout */
         .container {
@@ -150,6 +151,16 @@
     </style>
 </head>
 <body>
+    <!-- Modal: User Manual -->
+    <div id="manual-modal" class="modal">
+        <div class="modal-content modal-lg animate-fade" style="max-height: 85vh; display: flex; flex-direction: column; overflow: hidden;">
+            <span class="modal-close" onclick="closeManualModal()"><i class="ph-bold ph-x"></i></span>
+            <div id="manual-content-view" class="manual-view" style="overflow-y: auto; padding-right: 15px; margin-top: 10px; line-height: 1.8;">
+                <p>Loading user manual...</p>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal: Leave Details -->
     <div id="leave-modal" class="modal">
         <div class="modal-content animate-fade">
@@ -226,6 +237,9 @@
             <div class="logo">
                 <div class="logo-icon"><i class="ph-bold ph-shield-check"></i></div>
                 <span>Admin Console</span>
+                <a href="javascript:void(0)" onclick="showManual()" style="margin-left: 15px; font-size: 0.85rem; font-weight: 400; color: var(--text-sub); text-decoration: none; display: flex; align-items: center; gap: 4px; border: 1px solid var(--border-color); padding: 4px 10px; border-radius: 4px; background: white; transition: 0.2s;">
+                    <i class="ph-bold ph-book-open"></i> 使用手冊 (User Manual)
+                </a>
             </div>
             <div style="display: flex; gap: 15px; align-items: center;">
                 <a href="index.html" class="admin-link">Back to Public Portal</a>
